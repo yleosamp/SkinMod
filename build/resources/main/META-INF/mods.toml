@@ -1,0 +1,11 @@
+modLoader="javafml"
+loaderVersion="[40,)"
+license="All rights reserved"
+
+[[mods]]
+modId="skinmod"
+version="1.0.0"
+displayName="Skin Mod"
+description='''
+Mod para carregar skins de jogadores em servidores offline automaticamente
+''' 
