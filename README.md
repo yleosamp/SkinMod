@@ -12,7 +12,7 @@ Um mod para Minecraft Forge 1.18.2 que permite aos jogadores mudarem suas skins 
 - **Sistema de Armazenamento**: Salva automaticamente a última skin escolhida
 - **Atualização em Tempo Real**: As skins são atualizadas instantaneamente
 - **Persistência**: As skins são mantidas mesmo após desconectar/reconectar
-- **Compatibilidade**: Funciona em servidores offline/crack
+- **Compatibilidade**: Funciona em servidores offline/piratas
 
 ## 🚀 Instalação
 
