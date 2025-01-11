@@ -1,0 +1,52 @@
+# Arquivos do Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# Arquivos do IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+
+# Arquivos do VSCode
+.vscode/
+
+# Arquivos do Gradle
+.gradle/
+build/
+run/
+
+# Arquivos do Forge
+*.launch
+.factorypath
+
+# Arquivos do Java
+*.class
+*.log
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Arquivos específicos do Minecraft
+crash-reports/
+logs/
+saves/
+screenshots/
+options.txt
+usercache.json
+usernamecache.json
+
+# Outros
+*.bak
+*.swp
+*~
+.DS_Store
+Thumbs.db

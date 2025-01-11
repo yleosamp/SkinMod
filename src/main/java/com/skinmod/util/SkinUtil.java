@@ -7,54 +7,72 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.util.Base64;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
 import java.util.Collections;
 
 public class SkinUtil {
     public static boolean applySkin(ServerPlayer player, String nickname) {
         try {
-            // URL da skin do MineSkin.eu
-            String skinUrl = "https://mineskin.eu/skin/" + nickname;
+            System.out.println("[SkinMod] Iniciando processo para: " + nickname);
             
-            // Baixar a imagem da skin
-            URL url = new URL(skinUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
+            // Primeiro, pegar UUID do jogador
+            String mojangApi = "https://api.mojang.com/users/profiles/minecraft/" + nickname;
+            URL mojangUrl = new URL(mojangApi);
+            HttpURLConnection mojangConn = (HttpURLConnection) mojangUrl.openConnection();
+            mojangConn.setRequestMethod("GET");
+            mojangConn.setRequestProperty("User-Agent", "Mozilla/5.0");
             
-            if (conn.getResponseCode() != 200) {
-                System.out.println("[SkinMod] Skin não encontrada para: " + nickname);
+            if (mojangConn.getResponseCode() != 200) {
+                System.out.println("[SkinMod] Jogador não encontrado: " + nickname);
                 return false;
             }
 
-            // Ler a imagem
-            BufferedImage skinImage = ImageIO.read(conn.getInputStream());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(skinImage, "png", baos);
-            byte[] skinData = baos.toByteArray();
-            
-            // Converter para Base64
-            String base64Skin = Base64.getEncoder().encodeToString(skinData);
-            
-            // Criar o JSON da textura
-            String textureJson = "{\"textures\":{\"SKIN\":{\"url\":\"" + skinUrl + "\"}}}";
-            String textureValue = Base64.getEncoder().encodeToString(textureJson.getBytes());
-
-            // Aplicar a textura ao jogador
-            GameProfile gameProfile = player.getGameProfile();
-            gameProfile.getProperties().removeAll("textures");
-            gameProfile.getProperties().put("textures", new Property("textures", textureValue, ""));
-
-            // Atualizar visualmente para todos os jogadores
-            ClientboundPlayerInfoPacket removePacket = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.REMOVE_PLAYER, player);
-            ClientboundPlayerInfoPacket addPacket = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.ADD_PLAYER, player);
-
-            for (ServerPlayer p : player.getLevel().players()) {
-                p.connection.send(removePacket);
-                p.connection.send(addPacket);
+            // Ler UUID da resposta
+            InputStream is = mojangConn.getInputStream();
+            StringBuilder response = new StringBuilder();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                response.append(new String(buffer, 0, bytesRead));
             }
+            
+            String responseStr = response.toString().trim();
+            System.out.println("[SkinMod] Resposta da Mojang: " + responseStr);
+
+            // Extrair UUID usando o formato correto da resposta
+            String uuid = responseStr.split("\"id\" : \"")[1].split("\"")[0];
+            System.out.println("[SkinMod] UUID encontrado: " + uuid);
+
+            // Agora vamos pegar os dados da skin do SessionServer
+            String sessionApi = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false";
+            URL sessionUrl = new URL(sessionApi);
+            HttpURLConnection sessionConn = (HttpURLConnection) sessionUrl.openConnection();
+            sessionConn.setRequestMethod("GET");
+            sessionConn.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+            is = sessionConn.getInputStream();
+            response = new StringBuilder();
+            while ((bytesRead = is.read(buffer)) != -1) {
+                response.append(new String(buffer, 0, bytesRead));
+            }
+
+            String sessionResponse = response.toString();
+            String value = sessionResponse.split("\"value\" : \"")[1].split("\"")[0];
+            String signature = sessionResponse.split("\"signature\" : \"")[1].split("\"")[0];
+
+            // Aplicar textura com signature
+            GameProfile profile = player.getGameProfile();
+            profile.getProperties().removeAll("textures");
+            profile.getProperties().put("textures", new Property("textures", value, signature));
+
+            // Atualizar visualmente
+            for (ServerPlayer p : player.getLevel().players()) {
+                p.connection.send(new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.REMOVE_PLAYER, Collections.singletonList(player)));
+                p.connection.send(new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.ADD_PLAYER, Collections.singletonList(player)));
+            }
+
+            // Fazer o pulo
+            player.teleportTo(player.getX(), player.getY() + 0.1, player.getZ());
 
             System.out.println("[SkinMod] Skin aplicada com sucesso para: " + nickname);
             return true;
