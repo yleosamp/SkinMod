@@ -3,11 +3,11 @@ package com.skinmod.util;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
+import net.minecraft.world.level.GameType;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.HttpURLConnection;
-import java.util.Base64;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
 import java.util.Collections;
 
 public class SkinUtil {
@@ -65,14 +65,30 @@ public class SkinUtil {
             profile.getProperties().removeAll("textures");
             profile.getProperties().put("textures", new Property("textures", value, signature));
 
-            // Atualizar visualmente
+            // Salvar a skin escolhida
+            SkinStorage.saveSkin(player.getGameProfile().getName(), nickname);
+
+            // Guardar informações do jogador
+            double x = player.getX();
+            double y = player.getY();
+            double z = player.getZ();
+            float yRot = player.getYRot();
+            float xRot = player.getXRot();
+
+            // Atualizar visualmente para todos os jogadores
             for (ServerPlayer p : player.getLevel().players()) {
+                // Remove e readiciona na tab list
                 p.connection.send(new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.REMOVE_PLAYER, Collections.singletonList(player)));
                 p.connection.send(new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.ADD_PLAYER, Collections.singletonList(player)));
             }
 
-            // Fazer o pulo
-            player.teleportTo(player.getX(), player.getY() + 0.1, player.getZ());
+            // Pequeno delay para garantir a atualização
+            Thread.sleep(50);
+
+            // Teleportar para forçar atualização visual
+            player.teleportTo(x, y + 0.0001, z);
+            player.setYRot(yRot);
+            player.setXRot(xRot);
 
             System.out.println("[SkinMod] Skin aplicada com sucesso para: " + nickname);
             return true;

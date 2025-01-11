@@ -2,6 +2,7 @@ package com.skinmod;
 
 import com.skinmod.commands.SkinCommand;
 import com.skinmod.events.PlayerEvents;
+import com.skinmod.util.SkinStorage;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -12,6 +13,7 @@ public class SkinMod {
     public SkinMod() {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new PlayerEvents());
+        SkinStorage.init();
     }
 
     @SubscribeEvent
